@@ -13,11 +13,11 @@ int PWMB = 6;
 int STBY = 8;
 
 // ================= PID VARIABLES =================
-int baseSpeed = 120;   
+int baseSpeed = 100;   
 float lastPosition = 3500;  // for smoothing
-float kp = 0.09;  
+float kp = 0.095;  
 float ki = 0.0;
-float kd = 0.0;
+float kd = 0.17;
 float integral = 0;
 float lastError = 0;
 
@@ -36,7 +36,7 @@ void setup() {
 
   // QTR sensor setup
   qtr.setTypeAnalog();
-  qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
+  qtr.setSensorPins((const uint8_t[]){A7, A6, A5, A4, A3, A2, A1, A0}, SensorCount);
   qtr.setEmitterPin(12);
 
   // Calibration
@@ -92,10 +92,10 @@ void loop() {
   int correction = kp * error + ki * integral + kd * derivative;
 
   // ================= Limit extreme correction =================
-  correction = constrain(correction, -50, 50);
+  correction = constrain(correction, -200, 200);
 
-  int leftSpeed = baseSpeed - correction;
-  int rightSpeed = baseSpeed + correction;
+  int leftSpeed = baseSpeed + correction;
+  int rightSpeed = baseSpeed - correction;
 
   leftSpeed = constrain(leftSpeed, -255, 255);
   rightSpeed = constrain(rightSpeed, -255, 255);
