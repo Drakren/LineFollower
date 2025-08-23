@@ -16,7 +16,7 @@ int STBY = 8;
 int baseSpeed = 120;   
 float integral = 0;
 float lastError = 0;
-float kp = 0.8;  
+float kp = 0.09;  
 float ki = 0.0;
 float kd = 0.0;
 
