@@ -36,7 +36,7 @@ void setup() {
 
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
-  qtr.setEmitterPin(12);  // optional: LEDON pin
+  qtr.setEmitterPin(12);  
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
