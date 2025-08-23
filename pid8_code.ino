@@ -15,7 +15,7 @@ int STBY = 8;
 // ================= PID VARIABLES =================
 int baseSpeed = 100;   
 float lastPosition = 3500;  // for smoothing
-float kp = 0.095;  
+float kp = 0.092;  
 float ki = 0.0;
 float kd = 0.17;
 float integral = 0;
