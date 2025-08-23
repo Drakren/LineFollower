@@ -12,16 +12,17 @@ int BIN2 = 7;
 int PWMB = 6;
 int STBY = 8;
 
-
+// ================= PID VARIABLES =================
 int baseSpeed = 120;   
-float integral = 0;
-float lastError = 0;
+float lastPosition = 3500;  // for smoothing
 float kp = 0.09;  
 float ki = 0.0;
 float kd = 0.0;
+float integral = 0;
+float lastError = 0;
 
 void setup() {
-  
+  // Motor pins
   pinMode(AIN1, OUTPUT);
   pinMode(AIN2, OUTPUT);
   pinMode(PWMA, OUTPUT);
@@ -31,18 +32,19 @@ void setup() {
   pinMode(STBY, OUTPUT);
   digitalWrite(STBY, HIGH);
 
-  
   Serial.begin(9600);
 
+  // QTR sensor setup
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
-  qtr.setEmitterPin(12);  
+  qtr.setEmitterPin(12);
 
+  // Calibration
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  Serial.println("Calibrating...");
+  Serial.println("Calibrating on battery...");
   for (uint16_t i = 0; i < 250; i++) {
     qtr.calibrate();
     delay(20);
@@ -50,6 +52,7 @@ void setup() {
   digitalWrite(LED_BUILTIN, LOW);
   Serial.println("Calibration Done!");
 
+  // Print calibration results
   Serial.println("Min values:");
   for (uint8_t i = 0; i < SensorCount; i++) {
     Serial.print(qtr.calibrationOn.minimum[i]);
@@ -67,27 +70,37 @@ void setup() {
 }
 
 void loop() {
+  // Read sensors
   qtr.readCalibrated(sensorValues);
   for (int i = 0; i < SensorCount; i++) {
     Serial.print(sensorValues[i]);
     Serial.print('\t');
   }
 
-  uint16_t position = qtr.readLineBlack(sensorValues);
-  int error = position - 3500;  
+  // Get raw line position
+  uint16_t rawPosition = qtr.readLineBlack(sensorValues);
 
+  // ================= Smooth sudden jumps =================
+  float position = 0.8 * lastPosition + 0.2 * rawPosition;
+  lastPosition = position;
+
+  int error = position - 3500;  // center
+
+  // ================= PID =================
   integral += error;
   int derivative = error - lastError;
   int correction = kp * error + ki * integral + kd * derivative;
 
-  int leftSpeed = baseSpeed + correction;
-  int rightSpeed = baseSpeed - correction;
+  // ================= Limit extreme correction =================
+  correction = constrain(correction, -50, 50);
 
+  int leftSpeed = baseSpeed - correction;
+  int rightSpeed = baseSpeed + correction;
 
   leftSpeed = constrain(leftSpeed, -255, 255);
   rightSpeed = constrain(rightSpeed, -255, 255);
 
-
+  // Drive motors
   setMotor(AIN1, AIN2, PWMA, leftSpeed);
   setMotor(BIN1, BIN2, PWMB, rightSpeed);
 
@@ -98,7 +111,7 @@ void loop() {
   Serial.print(" L: "); Serial.print(leftSpeed);
   Serial.print(" R: "); Serial.println(rightSpeed);
 
-  delay(100);
+  delay(50);  // smaller delay for stability
 }
 
 void setMotor(int in1, int in2, int pwm, int speed) {
