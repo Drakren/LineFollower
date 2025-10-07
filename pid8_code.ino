@@ -13,12 +13,13 @@ int PWMB = 6;
 int STBY = 8;
 
 // ================= PID VARIABLES =================
-int baseSpeed = 100;   
-float lastPosition = 3500;  // for smoothing
+int baseSpeed = 120;   
+// float lastPosition = 3500;  // for smoothing
 float kp = 0.092;  
-float ki = 0.0;
-float kd = 0.17;
+float ki = 0.01;
+float kd = 0.8;
 float integral = 0;
+float error = 0;
 float lastError = 0;
 
 void setup() {
@@ -45,7 +46,7 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
 
   Serial.println("Calibrating on battery...");
-  for (uint16_t i = 0; i < 250; i++) {
+  for (uint16_t i = 0; i < 450; i++) {
     qtr.calibrate();
     delay(20);
   }
@@ -78,13 +79,15 @@ void loop() {
   }
 
   // Get raw line position
-  uint16_t rawPosition = qtr.readLineBlack(sensorValues);
+  int position = qtr.readLineBlack(sensorValues);
 
   // ================= Smooth sudden jumps =================
-  float position = 0.8 * lastPosition + 0.2 * rawPosition;
-  lastPosition = position;
+  // float position = 0.8 * lastPosition + 0.2 * rawPosition;
+  // lastPosition = position;
 
-  int error = position - 3500;  // center
+  // int error = position - 3500;  // center
+
+  error = position - 3500;
 
   // ================= PID =================
   integral += error;
@@ -92,7 +95,7 @@ void loop() {
   int correction = kp * error + ki * integral + kd * derivative;
 
   // ================= Limit extreme correction =================
-  correction = constrain(correction, -200, 200);
+  correction = constrain(correction, -225, 225);
 
   int leftSpeed = baseSpeed + correction;
   int rightSpeed = baseSpeed - correction;
@@ -111,7 +114,7 @@ void loop() {
   Serial.print(" L: "); Serial.print(leftSpeed);
   Serial.print(" R: "); Serial.println(rightSpeed);
 
-  delay(50);  // smaller delay for stability
+  delay(20);  // smaller delay for stability
 }
 
 void setMotor(int in1, int in2, int pwm, int speed) {
@@ -126,7 +129,7 @@ void setMotor(int in1, int in2, int pwm, int speed) {
   }
 }
 
-void stopMotors() {
-  analogWrite(PWMA, 0);
-  analogWrite(PWMB, 0);
-}
+// void stopMotors() {
+//   analogWrite(PWMA, 0);
+//   analogWrite(PWMB, 0);
+// }
